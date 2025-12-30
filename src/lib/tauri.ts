@@ -77,8 +77,8 @@ export async function refreshAuthStatus(): Promise<AuthStatus> {
 
 // Amp model mapping for routing requests to different models (simple mode)
 export interface AmpModelMapping {
-	from: string;
-	to: string;
+	name: string;
+	alias: string;
 	enabled?: boolean; // Whether this mapping is active
 }
 

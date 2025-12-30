@@ -845,7 +845,7 @@ export function SettingsPage() {
 		const slot = AMP_MODEL_SLOTS.find((s) => s.id === slotId);
 		if (!slot) return null;
 		const mappings = config().ampModelMappings || [];
-		return mappings.find((m) => m.from === slot.fromModel);
+		return mappings.find((m) => m.name === slot.fromModel);
 	};
 
 	// Update mapping for a slot
@@ -860,7 +860,7 @@ export function SettingsPage() {
 		const currentMappings = config().ampModelMappings || [];
 		// Remove existing mapping for this slot
 		const filteredMappings = currentMappings.filter(
-			(m) => m.from !== slot.fromModel,
+			(m) => m.name !== slot.fromModel,
 		);
 
 		// Add new mapping if enabled and has a target
@@ -868,7 +868,7 @@ export function SettingsPage() {
 		if (enabled && toModel) {
 			newMappings = [
 				...filteredMappings,
-				{ from: slot.fromModel, to: toModel, enabled: true },
+				{ name: slot.fromModel, alias: toModel, enabled: true },
 			];
 		} else {
 			newMappings = filteredMappings;
@@ -893,7 +893,7 @@ export function SettingsPage() {
 	const getCustomMappings = () => {
 		const mappings = config().ampModelMappings || [];
 		const slotFromModels = new Set(AMP_MODEL_SLOTS.map((s) => s.fromModel));
-		return mappings.filter((m) => !slotFromModels.has(m.from));
+		return mappings.filter((m) => !slotFromModels.has(m.name));
 	};
 
 	// Add a custom mapping
@@ -908,12 +908,16 @@ export function SettingsPage() {
 
 		// Check for duplicates
 		const existingMappings = config().ampModelMappings || [];
-		if (existingMappings.some((m) => m.from === from)) {
+		if (existingMappings.some((m) => m.name === from)) {
 			toastStore.error(`A mapping for '${from}' already exists`);
 			return;
 		}
 
-		const newMapping: AmpModelMapping = { from, to, enabled: true };
+		const newMapping: AmpModelMapping = {
+			name: from,
+			alias: to,
+			enabled: true,
+		};
 		const newMappings = [...existingMappings, newMapping];
 
 		const newConfig = { ...config(), ampModelMappings: newMappings };
@@ -936,7 +940,7 @@ export function SettingsPage() {
 	// Remove a custom mapping
 	const removeCustomMapping = async (fromModel: string) => {
 		const currentMappings = config().ampModelMappings || [];
-		const newMappings = currentMappings.filter((m) => m.from !== fromModel);
+		const newMappings = currentMappings.filter((m) => m.name !== fromModel);
 
 		const newConfig = { ...config(), ampModelMappings: newMappings };
 		setConfig(newConfig);
@@ -998,7 +1002,7 @@ export function SettingsPage() {
 	) => {
 		const currentMappings = config().ampModelMappings || [];
 		const newMappings = currentMappings.map((m) =>
-			m.from === fromModel ? { ...m, to: newToModel, enabled } : m,
+			m.name === fromModel ? { ...m, to: newToModel, enabled } : m,
 		);
 
 		const newConfig = { ...config(), ampModelMappings: newMappings };
@@ -2033,7 +2037,7 @@ export function SettingsPage() {
 										{(slot) => {
 											const mapping = () => getMappingForSlot(slot.id);
 											const isEnabled = () => !!mapping();
-											const currentTarget = () => mapping()?.to || "";
+											const currentTarget = () => mapping()?.alias || "";
 
 											return (
 												<div class="p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -2210,8 +2214,8 @@ export function SettingsPage() {
 																checked={mapping.enabled !== false}
 																onChange={(e) => {
 																	updateCustomMapping(
-																		mapping.from,
-																		mapping.to,
+																		mapping.name,
+																		mapping.alias,
 																		e.currentTarget.checked,
 																	);
 																}}
@@ -2227,9 +2231,9 @@ export function SettingsPage() {
 															{/* From model (readonly) */}
 															<div
 																class="w-28 sm:w-32 shrink-0 px-2 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-600 dark:text-gray-400 font-mono truncate"
-																title={mapping.from}
+																title={mapping.name}
 															>
-																{mapping.from}
+																{mapping.name}
 															</div>
 
 															{/* Arrow */}
@@ -2239,10 +2243,10 @@ export function SettingsPage() {
 
 															{/* To model (dropdown) */}
 															<select
-																value={mapping.to}
+																value={mapping.alias}
 																onChange={(e) => {
 																	updateCustomMapping(
-																		mapping.from,
+																		mapping.name,
 																		e.currentTarget.value,
 																		mapping.enabled !== false,
 																	);
@@ -2330,7 +2334,7 @@ export function SettingsPage() {
 															<button
 																type="button"
 																onClick={() =>
-																	removeCustomMapping(mapping.from)
+																	removeCustomMapping(mapping.name)
 																}
 																class="p-1.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
 																title="Remove mapping"
@@ -3160,8 +3164,8 @@ export function SettingsPage() {
 									{(() => {
 										const mappings = config().ampModelMappings || [];
 										const mappedModels = mappings
-											.filter((m) => m.enabled !== false && m.to)
-											.map((m) => m.to);
+											.filter((m) => m.enabled !== false && m.alias)
+											.map((m) => m.alias);
 										const { builtInModels } = getAvailableTargetModels();
 
 										// Get models for selected provider

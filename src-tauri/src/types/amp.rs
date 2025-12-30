@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AmpModelMapping {
-    pub from: String,
-    pub to: String,
+    pub name: String,
+    pub alias: String,
     #[serde(default = "default_enabled")]
     pub enabled: bool,
 }
